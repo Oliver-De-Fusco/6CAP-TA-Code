@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import arch.bootstrap as ab
 
 # Exits
 
@@ -190,7 +191,7 @@ def apply_ichi(data, short=9, medium=26, long=52):
     return pd.concat([data, _tenkan, _kijin, _chikou, _span_a, _span_b], axis=1)
 
 
-def trade(data, entry, exit, short=9, medium=26, long=52):
+def trade(data, entry, exit, short, medium, long):
     """
     data = log returns of closing prices using pandas series.
     entry and exit are functions. 
@@ -231,9 +232,18 @@ def trade(data, entry, exit, short=9, medium=26, long=52):
     return performance
 
 
-def sharpe_ratio(data, entry, exit, short=9, medium=26, long=52):
+def sharpe_ratio(data, entry, exit, short, medium, long):
     x = trade(data, entry, exit, short, medium, long)
     mu, sigma = 12 * x.mean(), np.sqrt(12 * x.var())
     values = np.array([mu, sigma, mu / sigma]).squeeze()
     index = ["mu", "sigma", "Sharpe"]
     return pd.Series(values, index=index)
+
+
+def confidence_interval(bs, metric, short, medium, long, strategy, n=500):
+
+        extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1]}
+
+        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs,reuse=False)
+        
+        return (extra_kwargs, out)
