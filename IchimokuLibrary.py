@@ -240,10 +240,10 @@ def sharpe_ratio(data, entry, exit, short, medium, long):
     return pd.Series(values, index=index)
 
 
-def confidence_interval(bs, metric, short, medium, long, strategy, n=500):
+def confidence_interval(bs, metric, short, medium, long, strategy, n=10_000):
 
         extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1]}
 
-        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs,reuse=False)
+        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs,reuse=True)
         
         return (extra_kwargs, out)
