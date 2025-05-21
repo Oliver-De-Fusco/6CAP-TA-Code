@@ -206,28 +206,52 @@ def trade(data, entry, exit, short, medium, long):
         exit = EXIT_REGISTRY[exit]
 
     # Apply entry and exit signals
-    mask_1 = (entry(ichi_data).dropna() == 1) & (
-        entry(ichi_data).dropna().shift(1) == 0)
-    mask_2 = (exit(ichi_data).dropna() == 1) & (
-        exit(ichi_data).dropna().shift(1) == 0)
-
-    df = pd.concat([mask_1, mask_2, pd.Series(
-        np.zeros(mask_1.shape), index=mask_1.index)], axis=1)
-    df.columns = ["col1", "col2", "col3"]
-
-    buy_state = 0
-    col3_values = []
-
+    # mask_1 = (entry(ichi_data).dropna() == 1) & (
+        # entry(ichi_data).dropna().shift(1) == 0)
+    # mask_2 = (exit(ichi_data).dropna() == 1) & (
+        # exit(ichi_data).dropna().shift(1) == 0)
+# 
+    # df = pd.concat([mask_1, mask_2, pd.Series(
+        # np.zeros(mask_1.shape), index=mask_1.index)], axis=1)
+    # df.columns = ["col1", "col2", "col3"]
+# 
+    # buy_state = 0
+    # col3_values = []
+# 
     # Iterate
-    for index, row in df.iterrows():
-        col3_values.append(buy_state)
-        if row['col1']:
-            buy_state = 1
-        elif row['col2']:
-            buy_state = 0
+    # for index, row in df.iterrows():
+        # col3_values.append(buy_state)
+        # if row['col1']:
+            # buy_state = 1
+        # elif row['col2']:
+            # buy_state = 0
+# 
+    # df['col3'] = col3_values
+    # performance = (data * df["col3"])
 
-    df['col3'] = col3_values
-    performance = (data * df["col3"])
+
+    entry_signal = entry(ichi_data)
+    exit_signal = exit(ichi_data)
+
+    mask_1 = (entry_signal == 1) & (entry_signal.shift(1) == 0)
+    mask_2 = (exit_signal == 1) & (exit_signal.shift(1) == 0)
+
+    # Use NumPy for state computation
+    entry_np = mask_1.to_numpy()
+    exit_np = mask_2.to_numpy()
+    n = len(entry_np)
+    state_np = np.zeros(n, dtype=int)
+    current_state = 0
+
+    for i in range(n):
+        state_np[i] = current_state
+        if entry_np[i]:
+            current_state = 1
+        elif exit_np[i]:
+            current_state = 0
+
+    performance = data.iloc[-n:] * state_np  # Align with the last n values
+    return performance
 
     return performance
 
@@ -240,7 +264,7 @@ def sharpe_ratio(data, entry, exit, short, medium, long):
     return pd.Series(values, index=index)
 
 
-def confidence_interval(bs, metric, short, medium, long, strategy, n=10_000):
+def confidence_interval(bs, metric, short, medium, long, strategy, n=1_000):
 
         extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1]}
 
