@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 import arch.bootstrap as ab
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Exits
 
@@ -192,6 +196,7 @@ def apply_ichi(data, short=9, medium=26, long=52):
 
 
 def trade(data, entry, exit, short, medium, long):
+    # logger.info(f"trading {entry} - {exit}")
     """
     data = log returns of closing prices using pandas series.
     entry and exit are functions. 
@@ -204,30 +209,6 @@ def trade(data, entry, exit, short, medium, long):
         entry = ENTRY_REGISTRY[entry]
     if isinstance(exit, str):
         exit = EXIT_REGISTRY[exit]
-
-    # Apply entry and exit signals
-    # mask_1 = (entry(ichi_data).dropna() == 1) & (
-        # entry(ichi_data).dropna().shift(1) == 0)
-    # mask_2 = (exit(ichi_data).dropna() == 1) & (
-        # exit(ichi_data).dropna().shift(1) == 0)
-# 
-    # df = pd.concat([mask_1, mask_2, pd.Series(
-        # np.zeros(mask_1.shape), index=mask_1.index)], axis=1)
-    # df.columns = ["col1", "col2", "col3"]
-# 
-    # buy_state = 0
-    # col3_values = []
-# 
-    # Iterate
-    # for index, row in df.iterrows():
-        # col3_values.append(buy_state)
-        # if row['col1']:
-            # buy_state = 1
-        # elif row['col2']:
-            # buy_state = 0
-# 
-    # df['col3'] = col3_values
-    # performance = (data * df["col3"])
 
 
     entry_signal = entry(ichi_data)
@@ -253,21 +234,22 @@ def trade(data, entry, exit, short, medium, long):
     performance = data.iloc[-n:] * state_np  # Align with the last n values
     return performance
 
-    return performance
 
-
-def sharpe_ratio(data, entry, exit, short, medium, long):
+def sharpe_ratio(data, entry, exit, short, medium, long, days=252):
     x = trade(data, entry, exit, short, medium, long)
-    mu, sigma = 12 * x.mean(), np.sqrt(12 * x.var())
+    mu, sigma = days * x.mean(), np.sqrt(days * x.var())
+
     values = np.array([mu, sigma, mu / sigma]).squeeze()
     index = ["mu", "sigma", "Sharpe"]
     return pd.Series(values, index=index)
 
 
-def confidence_interval(bs, metric, short, medium, long, strategy, n=1_000):
+def confidence_interval(bs, metric, short, medium, long, strategy, n=750, days=252):
 
-        extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1]}
+        extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1], "days":days}
 
-        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs,reuse=True)
+        # logger.info(f"Simulating {extra_kwargs["exit"]} - {extra_kwargs["entry"]}")
+        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs, reuse=False)
+        logger.debug(f"Completed simulation for {extra_kwargs}")
         
         return (extra_kwargs, out)
