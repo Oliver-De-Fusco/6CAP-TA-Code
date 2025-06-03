@@ -49,7 +49,7 @@ def main(args):
     multi_index_index = pd.MultiIndex.from_tuples(product(trading_lengths['short'], trading_lengths['medium'],trading_lengths["long"], ["Lower", "Upper"]))
 
     trading_ci = pd.DataFrame(columns=multi_index_columns, index=multi_index_index)
-    trading_ci.to_excel(file_name)
+    # trading_ci.to_excel(file_name)
     trading_ci = pd.read_excel(file_name,header=[0,1,2], index_col=[0,1,2,3])
 
     if "btc" in file_name:

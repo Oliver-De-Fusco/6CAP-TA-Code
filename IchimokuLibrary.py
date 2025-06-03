@@ -95,7 +95,7 @@ def l_1(data):
 
 
 def l_2(data):
-    return  data["Close"] > data["chikou"]
+    return  data["Close"] < data["chikou"]
 
 def l_3(data):
     # Check span a and span b offsets
@@ -109,7 +109,7 @@ def s_1(data):
 
 
 def s_2(data):
-    return data["Close"] < data["chikou"]
+    return data["Close"] > data["chikou"]
 
 
 def s_3(data):
@@ -120,7 +120,7 @@ def s_3(data):
 # CONSTANTS
 # Strategy Registries (define these at module level)
 EXIT_REGISTRY = {
-    'ex_l_1': ex_l_1,  # Replace with actual function references
+    'ex_l_1': ex_l_1,
     'ex_l_2': ex_l_2,
     'ex_l_3': ex_l_3,
     'ex_l_4': ex_l_4,
@@ -163,7 +163,7 @@ def kijun(data, t=26):
 
 
 def chikou(data, t=26):
-    return (data.shift(-t)).rename("chikou")
+    return (data.shift(t)).rename("chikou")
 
 
 def span_a(data, t_short=9, t_mid=26):
@@ -228,8 +228,6 @@ def trade(data, entry, exit, short, medium, long):
         if entry_np[i]:
             current_state = 1
         elif exit_np[i]:
-            current_state = 0
-        if entry_np[i] == exit_np[i]:
             current_state = 0
 
     performance = data.iloc[-n:] * state_np  # Align with the last n values
