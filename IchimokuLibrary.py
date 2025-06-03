@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def ex_l_1(data):
-    return data["Close"] < data["kijin"]
+    return data["Close"] < data["kijun"]
 
 
 def ex_l_2(data):
@@ -35,87 +35,86 @@ def ex_l_5(data):
 
 # !!! WIP !!!
 def ex_s_1(data):
-    return data["Close"] > data["kijin"]
+    return data["Close"] > data["kijun"]
 
 
 def ex_s_2(data):
-    return l_2(data) & (data["Close"] > data["kijin"])
+    return l_2(data) & (data["Close"] > data["kijun"])
 
 
 def ex_s_3(data):
-    return l_1(data) & l_2(data) & (data["Close"] > data["kijin"])
+    return l_1(data) & l_2(data) & (data["Close"] > data["kijun"])
 
 
 def ex_s_4(data):
-    return l_1(data) & l_2(data) & l_3(data) & (data["Close"] > data["kijin"])
+    return l_1(data) & l_2(data) & l_3(data) & (data["Close"] > data["kijun"])
 
 
 def ex_s_5(data):
-    return s_1(data) & (data["Close"] < data["kijin"])
+    return s_1(data) & (data["Close"] < data["kijun"])
 
 
 # Entries
 
 def en_l_1(data):
-    return l_1(data) & (data["Close"] > data["kijin"])
+    return l_1(data) & (data["Close"] > data["kijun"])
 
 
 def en_l_2(data):
-    return l_2(data) & (data["Close"] > data["kijin"])
+    return l_2(data) & (data["Close"] > data["kijun"])
 
 
 def en_l_12(data):
-    return l_1(data) & l_2(data) & (data["Close"] > data["kijin"])
+    return l_1(data) & l_2(data) & (data["Close"] > data["kijun"])
 
 
 def en_l_123(data):
-    return l_1(data) & l_2(data) & l_3(data) & (data["Close"] > data["kijin"])
+    return l_1(data) & l_2(data) & l_3(data) & (data["Close"] > data["kijun"])
 
 
 def en_s_1(data):
-    return s_1(data) & (data["Close"] < data["kijin"])
+    return s_1(data) & (data["Close"] < data["kijun"])
 
 
 def en_s_2(data):
-    return s_2(data) & (data["Close"] < data["kijin"])
+    return s_2(data) & (data["Close"] < data["kijun"])
 
 
 def en_s_12(data):
-    return s_1(data) & s_2(data) & (data["Close"] < data["kijin"])
+    return s_1(data) & s_2(data) & (data["Close"] < data["kijun"])
 
 
 def en_s_123(data):
-    return s_1(data) & s_2(data) & s_3(data) & (data["Close"] < data["kijin"])
+    return s_1(data) & s_2(data) & s_3(data) & (data["Close"] < data["kijun"])
 
 # Entry Bullish patterns
 
 
 def l_1(data):
-    return data["tenkan"] > data["kijin"]
+    return data["tenkan"] > data["kijun"]
 
 
 def l_2(data):
-    return data["chikou"] > data["Close"]
-
+    return  data["Close"] > data["chikou"]
 
 def l_3(data):
     # Check span a and span b offsets
-    return data["Close"] > np.max([data["span_a"], data["span_b"]], axis=0)
+    return data["Close"] > np.max(data[["span_a","span_b"]],axis=1)
 
 # Exit Bearish patterns
 
 
 def s_1(data):
-    return data["tenkan"] < data["kijin"]
+    return data["tenkan"] < data["kijun"]
 
 
 def s_2(data):
-    return data["chikou"] < data["Close"]
+    return data["Close"] < data["chikou"]
 
 
 def s_3(data):
     # Check span a and span b offsets
-    return data["Close"] < np.min([data["span_a"], data["span_b"]], axis=0)
+    return data["Close"] < np.min(data[["span_a","span_b"]], axis=1)
 
 
 # CONSTANTS
@@ -159,8 +158,8 @@ def tenkan(data, t=9):
     return (((data.rolling(t).max()) + (data.rolling(t).min())) / 2).rename("tenkan")
 
 
-def kijin(data, t=26):
-    return (((data.rolling(t).max()) + (data.rolling(t).min())) / 2).rename("kijin")
+def kijun(data, t=26):
+    return (((data.rolling(t).max()) + (data.rolling(t).min())) / 2).rename("kijun")
 
 
 def chikou(data, t=26):
@@ -168,7 +167,7 @@ def chikou(data, t=26):
 
 
 def span_a(data, t_short=9, t_mid=26):
-    return ((((tenkan(data, t_short) + kijin(data, t_mid))) / 2).shift(t_mid)).rename("span_a")
+    return ((((tenkan(data, t_short) + kijun(data, t_mid))) / 2).shift(t_mid)).rename("span_a")
 
 
 def span_b(data, t_mid=26, t_long=52):
@@ -187,12 +186,12 @@ def apply_ichi(data, short=9, medium=26, long=52):
     data = data.copy()
 
     _tenkan = tenkan(data, short)
-    _kijin = kijin(data, medium)
+    _kijun = kijun(data, medium)
     _chikou = chikou(data, medium)
     _span_a = span_a(data, short, medium)
     _span_b = span_b(data, medium, long)
 
-    return pd.concat([data, _tenkan, _kijin, _chikou, _span_a, _span_b], axis=1)
+    return pd.concat([data, _tenkan, _kijun, _chikou, _span_a, _span_b], axis=1)
 
 
 def trade(data, entry, exit, short, medium, long):
@@ -202,7 +201,7 @@ def trade(data, entry, exit, short, medium, long):
     entry and exit are functions. 
     """
 
-    ichi_data = apply_ichi(data, short, medium, long)
+    ichi_data = apply_ichi(data.cumsum(), short, medium, long)
 
     # Jank af
     if isinstance(entry, str):
@@ -221,7 +220,7 @@ def trade(data, entry, exit, short, medium, long):
     entry_np = mask_1.to_numpy()
     exit_np = mask_2.to_numpy()
     n = len(entry_np)
-    state_np = np.zeros(n, dtype=int)
+    state_np = np.zeros(n, dtype=bool)
     current_state = 0
 
     for i in range(n):
@@ -230,8 +229,16 @@ def trade(data, entry, exit, short, medium, long):
             current_state = 1
         elif exit_np[i]:
             current_state = 0
+        if entry_np[i] == exit_np[i]:
+            current_state = 0
 
     performance = data.iloc[-n:] * state_np  # Align with the last n values
+    # Calculate and add costs
+    # cost_value = np.log(1 - 0.005)
+    # cost_vector = np.zeros(n)
+    # cost_vector[entry_np] += cost_value
+    # cost_vector[exit_np] += cost_value
+
     return performance
 
 
@@ -249,7 +256,7 @@ def confidence_interval(bs, metric, short, medium, long, strategy, n=750, days=2
         extra_kwargs = {"short":short, "medium":medium, "long":long, "exit":strategy[0], "entry":strategy[1], "days":days}
 
         # logger.info(f"Simulating {extra_kwargs["exit"]} - {extra_kwargs["entry"]}")
-        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs, reuse=False)
+        out = bs.conf_int(metric, n, extra_kwargs=extra_kwargs)
         logger.debug(f"Completed simulation for {extra_kwargs}")
         
         return (extra_kwargs, out)

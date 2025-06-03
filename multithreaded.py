@@ -101,6 +101,10 @@ def main(args):
                 position = result[0]
                 data = result[1]
 
+                if (data[0][2] + data[1][2])/2 > 2:
+                    logger.info(f"Sharpe above 2: {position}")
+                    logger.info(f"\n{data}")
+
                 trading_ci.loc[(position["short"], position["medium"], position["long"], "Lower"), (position["exit"], position["entry"], "mu")] = data[0][0]
                 trading_ci.loc[(position["short"], position["medium"], position["long"], "Upper"), (position["exit"], position["entry"], "mu")] = data[1][1]
 
@@ -121,11 +125,9 @@ def main(args):
                 elapsed = (datetime.now() - start_time)
                 time_per_item = elapsed / count
                 remaining_time = (time_per_item) * (total - count)
-                # remaining_time = relativedelta(seconds=remaining_time).total_seconds()
                 logger.info(f"{datetime.now().strftime('%H:%M:%S')} - {count}/{total} : {round((count/total)*100,1)}% - {timedelta(seconds=remaining_time.total_seconds())}")
 
             except Exception as e:
-                # print(e.with_traceback())
                 traceback.print_exc()
 
         trading_ci.to_excel(file_name)
@@ -135,12 +137,23 @@ def main(args):
 
 if __name__ == "__main__":
 
-    for file in ["btcusd", "data2"]:
-        data = pd.read_csv(f"{file}.csv", index_col=0, parse_dates=True)
+    start_time = datetime.now()
+    for file in ["data2"]:
+        for destination in ["covid/no_transaction_costs/in_sample"]:
+            data = pd.read_csv(f"{file}.csv", index_col=0, parse_dates=True)
 
-        file_name = f"results/out_of_sample/{file}.xlsx"
-        data.drop(columns=["High", "Low", "Open", "Volume"])
-        returns = np.log(data["Close"] / data["Close"].shift(1)).dropna()
+            file_name = f"results/{destination}/{file}.xlsx"
+            # data.drop(columns=["High", "Low", "Open", "Volume"])
+            returns = np.log(data["Close"] / data["Close"].shift(1)).dropna()
 
-        inputs = {"file_name":file_name, "returns": returns["2022-01-01":]}
-        main(inputs)
+            if destination == "out_of_sample":
+                returns = returns["2022-01-01":]
+            else:
+                # Covid [:"2020-01-1"]
+                # 70/30 split [:"2022-01-1"]
+                returns = returns[:"2020-01-1"]
+
+            inputs = {"file_name":file_name, "returns":returns}
+            main(inputs)
+
+    print(f"Done - Started {start_time}, Finished {datetime.now()}")
