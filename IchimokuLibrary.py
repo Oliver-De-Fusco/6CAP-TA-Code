@@ -163,15 +163,15 @@ def kijun(data, t=26):
 
 
 def chikou(data, t=26):
-    return (data.shift(-t)).rename("chikou")
+    return (data.shift(t)).rename("chikou")
 
 
 def span_a(data, t_short=9, t_mid=26):
-    return ((((tenkan(data, t_short) + kijun(data, t_mid))) / 2)).shift(-t_mid).rename("span_a")
+    return ((((tenkan(data, t_short) + kijun(data, t_mid))) / 2)).shift(t_mid).rename("span_a")
 
 
 def span_b(data, t_mid=26, t_long=52):
-    return ((((data.rolling(t_long).max()) + (data.rolling(t_long).min())) / 2)).shift(-t_mid).rename("span_b")
+    return ((((data.rolling(t_long).max()) + (data.rolling(t_long).min())) / 2)).shift(t_mid).rename("span_b")
 
 
 def apply_ichi(data, short=9, medium=26, long=52):
@@ -188,8 +188,8 @@ def apply_ichi(data, short=9, medium=26, long=52):
     _tenkan = tenkan(data, short)
     _kijun = kijun(data, medium)
     _chikou = chikou(data, medium)
-    _span_a = span_a(data, short, medium).shift(medium)
-    _span_b = span_b(data, medium, long).shift(medium)
+    _span_a = span_a(data, short, medium)
+    _span_b = span_b(data, medium, long)
 
     return pd.concat([data, _tenkan, _kijun, _chikou, _span_a, _span_b], axis=1)
 
@@ -201,8 +201,7 @@ def trade(data, entry, exit, short, medium, long):
     entry and exit are functions. 
     """
 
-    ichi_data = apply_ichi(data.cumsum(), short, medium, long).dropna()
-
+    ichi_data = apply_ichi(data.cumsum(), short, medium, long)
     # Jank af
     if isinstance(entry, str):
         entry = ENTRY_REGISTRY[entry]
@@ -230,7 +229,8 @@ def trade(data, entry, exit, short, medium, long):
         elif exit_np[i]:
             current_state = 0
 
-    performance = data.iloc[-n:] * state_np  # Align with the last n values
+    performance = data.iloc[:n] * state_np  # Align with the last n values
+
     # Calculate and add costs
     # cost_value = np.log(1 - 0.005)
     # cost_vector = np.zeros(n)
@@ -238,7 +238,6 @@ def trade(data, entry, exit, short, medium, long):
     # cost_vector[exit_np] += cost_value
 
     return performance
-
 
 def sharpe_ratio(data, entry, exit, short, medium, long, days=252):
     x = trade(data, entry, exit, short, medium, long)

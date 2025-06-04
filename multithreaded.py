@@ -139,8 +139,8 @@ def main(args):
 if __name__ == "__main__":
 
     start_time = datetime.now()
-    for file in ["data2"]:
-        for destination in ["covid/no_transaction_costs/in_sample"]:
+    for file in ["data2","btcusd"]:
+        for destination in ["no_transaction_costs/in_sample"]:
             data = pd.read_csv(f"{file}.csv", index_col=0, parse_dates=True)
 
             file_name = f"results/{destination}/{file}.xlsx"
@@ -152,9 +152,9 @@ if __name__ == "__main__":
             else:
                 # Covid [:"2020-01-1"]
                 # 70/30 split [:"2022-01-1"]
-                returns = returns[:"2020-01-1"]
+                returns = returns[:"2022-01-1"]
 
             inputs = {"file_name":file_name, "returns":returns}
             main(inputs)
 
-    print(f"Done - Started {start_time}, Finished {datetime.now()}")
+    print(f"Finished all - Started {start_time}, Finished {datetime.now()}")
