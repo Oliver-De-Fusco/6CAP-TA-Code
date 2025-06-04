@@ -95,7 +95,7 @@ def l_1(data):
 
 
 def l_2(data):
-    return  data["Close"] < data["chikou"]
+    return  data["Close"] > data["chikou"]
 
 def l_3(data):
     # Check span a and span b offsets
@@ -109,7 +109,7 @@ def s_1(data):
 
 
 def s_2(data):
-    return data["Close"] > data["chikou"]
+    return data["Close"] < data["chikou"]
 
 
 def s_3(data):
@@ -167,11 +167,11 @@ def chikou(data, t=26):
 
 
 def span_a(data, t_short=9, t_mid=26):
-    return ((((tenkan(data, t_short) + kijun(data, t_mid))) / 2).shift(t_mid)).rename("span_a")
+    return ((((tenkan(data, t_short) + kijun(data, t_mid))) / 2)).shift(-t_mid).rename("span_a")
 
 
 def span_b(data, t_mid=26, t_long=52):
-    return ((((data.rolling(t_long).max()) + (data.rolling(t_long).min())) / 2).shift(t_mid)).rename("span_b")
+    return ((((data.rolling(t_long).max()) + (data.rolling(t_long).min())) / 2)).shift(-t_mid).rename("span_b")
 
 
 def apply_ichi(data, short=9, medium=26, long=52):
@@ -201,7 +201,7 @@ def trade(data, entry, exit, short, medium, long):
     entry and exit are functions. 
     """
 
-    ichi_data = apply_ichi(data.cumsum(), short, medium, long)
+    ichi_data = apply_ichi(data.cumsum(), short, medium, long).dropna()
 
     # Jank af
     if isinstance(entry, str):
