@@ -163,7 +163,7 @@ def kijun(data, t=26):
 
 
 def chikou(data, t=26):
-    return (data.shift(t)).rename("chikou")
+    return (data.shift(-t)).rename("chikou")
 
 
 def span_a(data, t_short=9, t_mid=26):
@@ -188,8 +188,8 @@ def apply_ichi(data, short=9, medium=26, long=52):
     _tenkan = tenkan(data, short)
     _kijun = kijun(data, medium)
     _chikou = chikou(data, medium)
-    _span_a = span_a(data, short, medium)
-    _span_b = span_b(data, medium, long)
+    _span_a = span_a(data, short, medium).shift(medium)
+    _span_b = span_b(data, medium, long).shift(medium)
 
     return pd.concat([data, _tenkan, _kijun, _chikou, _span_a, _span_b], axis=1)
 
